@@ -125,35 +125,79 @@ func ListFilesInZip(w http.ResponseWriter, r *http.Request, zipName string, zipP
 body { margin: 0; padding: 0; background: #000; color: white; font-family: Arial; }
 #viewer { width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; }
 #image { max-width: 100%; max-height: 100%; object-fit: contain; }
-#controls { position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); text-align: center; z-index: 10; }
+#controls { position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); text-align: center; z-index: 10; cursor: pointer; padding: 10px; background: rgba(0,0,0,0.5); border-radius: 10px; }
 #controls button { padding: 10px 20px; margin: 0 10px; font-size: 16px; border: none; background: #333; color: white; border-radius: 5px; cursor: pointer; }
 #pageInfo { margin: 0 10px; }
+#modal {
+  display: none;
+  position: fixed;
+  z-index: 20;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.8);
+}
+#modal-content {
+  background-color: #333;
+  margin: 15% auto;
+  padding: 20px;
+  border-radius: 10px;
+  width: 80%;
+  max-width: 400px;
+  text-align: center;
+  color: white;
+}
+#modal input { width: 100px; margin: 10px; padding: 5px; }
+#modal button { padding: 10px 15px; margin: 5px; font-size: 16px; border: none; background: #555; color: white; border-radius: 5px; cursor: pointer; }
 @media (max-width: 600px) {
-  #controls { bottom: 5px; }
+  #controls { bottom: 5px; padding: 5px; }
   #controls button { padding: 8px 16px; font-size: 14px; margin: 0 5px; }
   #pageInfo { font-size: 12px; }
+  #modal-content { margin: 20% auto; width: 90%; padding: 15px; }
+  #modal button { padding: 8px 12px; font-size: 14px; }
 }
 </style>
 <script>
 let currentPage = 0;
 const pages = [{{range .Files}}"{{.}}",{{end}}];
+const totalPages = pages.length;
 function loadPage(index) {
-  if (index < 0 || index >= pages.length) return;
+  if (index < 0 || index >= totalPages) return;
   currentPage = index;
   document.getElementById('image').src = '/' + "{{.ZipName}}" + '/' + pages[index] + '?t=' + Date.now();
-  document.getElementById('pageInfo').textContent = (currentPage + 1) + ' / ' + pages.length;
+  document.getElementById('pageInfo').textContent = (currentPage + 1) + ' / ' + totalPages;
+  document.getElementById('pageInput').value = currentPage + 1;
 }
 function nextPage() { loadPage(currentPage + 1); }
 function prevPage() { loadPage(currentPage - 1); }
+function goToPage() {
+  const pageNum = parseInt(document.getElementById('pageInput').value) - 1;
+  if (!isNaN(pageNum) && pageNum >= 0 && pageNum < totalPages) {
+    loadPage(pageNum);
+  }
+}
+function toggleModal() {
+  const modal = document.getElementById('modal');
+  modal.style.display = modal.style.display === 'block' ? 'none' : 'block';
+  if (modal.style.display === 'block') {
+    document.getElementById('pageInput').value = currentPage + 1;
+  }
+}
+function closeModal(event) {
+  if (event.target.id === 'modal') {
+    document.getElementById('modal').style.display = 'none';
+  }
+}
 document.addEventListener('keydown', (e) => {
   if (e.key === 'ArrowRight' || e.key === ' ') nextPage();
   if (e.key === 'ArrowLeft') prevPage();
+  if (e.key === 'Escape') closeModal();
 });
 document.addEventListener('touchend', (e) => {
-  const touch = e.changedTouches[0];
-  const x = (touch.clientX / window.innerWidth) * 100;
-  if (x > 50) nextPage();
-  else prevPage();
+  if (e.target.id === 'viewer') {
+    nextPage();
+  }
 });
 window.onload = () => {
   loadPage(0);
@@ -161,13 +205,23 @@ window.onload = () => {
 </script>
 </head>
 <body>
-<div id="viewer">
+<div id="viewer" onclick="nextPage()">
   <img id="image" src="" alt="Comic Page">
 </div>
-<div id="controls">
-  <button onclick="prevPage()">Previous</button>
+<div id="controls" onclick="toggleModal()">
   <span id="pageInfo"></span>
-  <button onclick="nextPage()">Next</button>
+</div>
+<div id="modal" onclick="closeModal(event)">
+  <div id="modal-content" onclick="event.stopPropagation();">
+    <h3>Navigation</h3>
+    <button onclick="prevPage(); closeModal();">Previous</button>
+    <button onclick="nextPage(); closeModal();">Next</button>
+    <br>
+    Go to page: <input type="number" id="pageInput" min="1" max="{{len .Files}}" value="1">
+    <button onclick="goToPage(); closeModal();">Go</button>
+    <br>
+    <button onclick="closeModal();">Close</button>
+  </div>
 </div>
 </body>
 </html>

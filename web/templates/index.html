@@ -60,7 +60,7 @@ h1, h2 { font-size: 1.5em; }
 {{if .FirstImage}}
 <img src="/{{.Name}}/{{.FirstImage}}" class="thumbnail" alt="{{.Name}} thumbnail">
 {{end}}
-<a href="/{{.Name}}">View {{.Name}}</a> ({{.SizeStr}}, {{.ImageCount}} images)
+<a href="/{{.Name}}">{{.Name}}</a> ({{.SizeStr}}, {{.ImageCount}} images)
 </li>
 {{end}}
 </ul>
