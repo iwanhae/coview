@@ -1,14 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Comic ZIP Files</title>
 <script src="/static/upload.js"></script>
 <style>
-body { font-family: Arial; margin: 20px; }
+body { font-family: Arial; margin: 10px; }
 #drop-zone {
   border: 2px dashed #ccc;
   border-radius: 10px;
-  padding: 50px;
+  padding: 20px;
   text-align: center;
   margin: 20px 0;
   transition: border-color 0.3s;
@@ -27,7 +28,17 @@ body { font-family: Arial; margin: 20px; }
 .status.success { background-color: #d4edda; color: #155724; }
 .status.error { background-color: #f8d7da; color: #721c24; }
 ul { list-style: none; padding: 0; }
-li { margin: 10px 0; }
+li { margin: 10px 0; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.thumbnail { width: 100px; height: 100px; object-fit: cover; border-radius: 5px; }
+a { word-break: break-all; }
+h1, h2 { font-size: 1.5em; }
+@media (max-width: 600px) {
+  body { margin: 5px; }
+  #drop-zone { padding: 10px; }
+  .thumbnail { width: 60px; height: 60px; }
+  li { gap: 5px; }
+  a { font-size: 0.9em; }
+}
 </style>
 </head>
 <body>
@@ -45,7 +56,12 @@ li { margin: 10px 0; }
 <h2>Available Comics</h2>
 <ul>
 {{range .}}
-<li><a href="/{{.}}">View {{.}}</a></li>
+<li>
+{{if .FirstImage}}
+<img src="/{{.Name}}/{{.FirstImage}}" class="thumbnail" alt="{{.Name}} thumbnail">
+{{end}}
+<a href="/{{.Name}}">View {{.Name}}</a> ({{.SizeStr}}, {{.ImageCount}} images)
+</li>
 {{end}}
 </ul>
 </body>
