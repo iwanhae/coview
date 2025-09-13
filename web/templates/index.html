@@ -28,7 +28,7 @@ body { font-family: Arial; margin: 10px; }
 .status.success { background-color: #d4edda; color: #155724; }
 .status.error { background-color: #f8d7da; color: #721c24; }
 ul { list-style: none; padding: 0; }
-li { margin: 10px 0; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+li { margin: 10px 0; display: flex; align-items: center; gap: 10px; flex-wrap: nowrap; }
 .thumbnail { width: 100px; height: 100px; object-fit: cover; border-radius: 5px; }
 a { word-break: break-all; }
 h1, h2 { font-size: 1.5em; }
@@ -57,10 +57,15 @@ h1, h2 { font-size: 1.5em; }
 <ul>
 {{range .}}
 <li>
+<div>
 {{if .FirstImage}}
 <img src="/{{.Name}}/{{.FirstImage}}" class="thumbnail" alt="{{.Name}} thumbnail">
 {{end}}
-<a href="/{{.Name}}">{{.Name}}</a> ({{.SizeStr}}, {{.ImageCount}} images)
+</div>
+<div style="display: grid;">
+<a href="/{{.Name}}">{{.Name}}</a>
+<span>({{.SizeStr}}, {{.ImageCount}} images)</span>
+</div>
 </li>
 {{end}}
 </ul>
