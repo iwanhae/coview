@@ -1,0 +1,8 @@
+# coview configuration
+server:
+  port: 8081
+data:
+  dir: data
+upload:
+  maxSize: 104857600  # 100MB in bytes
+  allowedTypes: [".zip"]

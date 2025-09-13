@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Comic Reader</title>
+<style>
+body { margin: 0; padding: 0; }
+#viewer { width: 100vw; height: 100vh; background: #000; display: flex; justify-content: center; align-items: center; }
+#image { max-width: 100%; max-height: 100%; object-fit: contain; }
+</style>
+<script>
+let currentPage = 0;
+const pages = []; // filled by server
+
+function loadPage(index) {
+  if (index < 0 || index >= pages.length) return;
+  currentPage = index;
+  document.getElementById('image').src = '/comic/' + pages[index];
+  updateControls();
+}
+
+function nextPage() { loadPage(currentPage + 1); }
+function prevPage() { loadPage(currentPage - 1); }
+
+function updateControls() {
+  // Optional: add buttons for next/prev
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight') nextPage();
+  if (e.key === 'ArrowLeft') prevPage();
+});
+
+window.onload = () => {
+  // Fetch pages from server or use inline script
+};
+</script>
+</head>
+<body>
+<div id="viewer">
+  <img id="image" src="" alt="Comic Page">
+</div>
+</body>
+</html>
