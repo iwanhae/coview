@@ -4,5 +4,5 @@ server:
 data:
   dir: data
 upload:
-  maxSize: 104857600  # 100MB in bytes
+  maxSize: 0  # No limit
   allowedTypes: [".zip"]

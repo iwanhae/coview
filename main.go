@@ -18,6 +18,7 @@ func main() {
 	portStr := ":" + strconv.Itoa(cfg.Server.Port)
 
 	http.HandleFunc("/", server.Handler)
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("web/static"))))
 
 	log.Printf("Server starting on %s", portStr)
 	log.Fatal(http.ListenAndServe(portStr, nil))

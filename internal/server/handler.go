@@ -62,7 +62,6 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	http.NotFound(w, r)
 }
 
-// UploadHandler handles ZIP file uploads via POST /upload.
 func UploadHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -75,18 +74,35 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	r.ParseMultipartForm(cfg.Upload.MaxSize)
-	file, header, err := r.FormFile("file")
-	if err != nil {
+	if err := r.ParseMultipartForm(0); err != nil { // 0 for no limit
 		http.Error(w, fmt.Sprintf("Failed to parse form: %v", err), http.StatusBadRequest)
 		return
 	}
-	defer file.Close()
 
-	filename := filepath.Base(header.Filename)
-	err = archive.UploadZip(filename, file, cfg.Upload.MaxSize)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Upload failed: %v", err), http.StatusBadRequest)
+	files := r.MultipartForm.File["files"]
+	if len(files) == 0 {
+		http.Error(w, "No files uploaded", http.StatusBadRequest)
+		return
+	}
+
+	var errors []string
+	for _, fheader := range files {
+		file, err := fheader.Open()
+		if err != nil {
+			errors = append(errors, fmt.Sprintf("Failed to open %s: %v", fheader.Filename, err))
+			continue
+		}
+
+		filename := filepath.Base(fheader.Filename)
+		err = archive.UploadZip(filename, file, 0) // No limit
+		file.Close()
+		if err != nil {
+			errors = append(errors, fmt.Sprintf("Upload failed for %s: %v", filename, err))
+		}
+	}
+
+	if len(errors) > 0 {
+		http.Error(w, strings.Join(errors, "; "), http.StatusBadRequest)
 		return
 	}
 

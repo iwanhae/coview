@@ -32,31 +32,11 @@ func ListZips(w http.ResponseWriter, r *http.Request) {
 		zipNames = append(zipNames, filepath.Base(f))
 	}
 
-	tmpl := `
-<!DOCTYPE html>
-<html>
-<head>
-<title>Comic ZIP Files</title>
-</head>
-<body>
-<h1>Comic ZIP Files</h1>
-
-<h2>Upload New ZIP</h2>
-<form action="/upload" method="post" enctype="multipart/form-data">
-  <input type="file" name="file" accept=".zip" required>
-  <button type="submit">Upload</button>
-</form>
-
-<h2>Available Comics</h2>
-<ul>
-{{range .}}
-<li><a href="/{{.}}">View {{.}}</a></li>
-{{end}}
-</ul>
-</body>
-</html>
-`
-	t := template.Must(template.New("list").Parse(tmpl))
+	t, err := template.ParseFiles("web/templates/index.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	t.Execute(w, zipNames)
 }
 

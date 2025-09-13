@@ -18,19 +18,15 @@ func UploadZip(filename string, file io.Reader, maxSize int64) error {
 		return fmt.Errorf("invalid file type: only .zip files are allowed")
 	}
 
-	// Check file size (simple, assumes reader can be limited)
 	tempFile, err := os.CreateTemp("", "upload-*.zip")
 	if err != nil {
 		return fmt.Errorf("failed to create temp file: %w", err)
 	}
 	defer os.Remove(tempFile.Name())
 
-	written, err := io.CopyN(tempFile, file, maxSize)
-	if err != nil && err != io.EOF {
+	_, err = io.Copy(tempFile, file)
+	if err != nil {
 		return fmt.Errorf("failed to read uploaded file: %w", err)
-	}
-	if written > maxSize {
-		return fmt.Errorf("file too large: exceeds %d bytes", maxSize)
 	}
 
 	tempFile.Close()

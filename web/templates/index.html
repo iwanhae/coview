@@ -2,20 +2,50 @@
 <html>
 <head>
 <title>Comic ZIP Files</title>
+<script src="/static/upload.js"></script>
+<style>
+body { font-family: Arial; margin: 20px; }
+#drop-zone {
+  border: 2px dashed #ccc;
+  border-radius: 10px;
+  padding: 50px;
+  text-align: center;
+  margin: 20px 0;
+  transition: border-color 0.3s;
+}
+#drop-zone.highlight {
+  border-color: #007bff;
+  background-color: #f8f9fa;
+}
+#upload-status {
+  margin: 10px 0;
+  padding: 10px;
+  border-radius: 5px;
+  display: none;
+}
+.status.info { background-color: #d1ecf1; color: #0c5460; }
+.status.success { background-color: #d4edda; color: #155724; }
+.status.error { background-color: #f8d7da; color: #721c24; }
+ul { list-style: none; padding: 0; }
+li { margin: 10px 0; }
+</style>
 </head>
 <body>
 <h1>Comic ZIP Files</h1>
 
-<h2>Upload New ZIP</h2>
-<form action="/upload" method="post" enctype="multipart/form-data">
-  <input type="file" name="file" accept=".zip" required>
-  <button type="submit">Upload</button>
+<h2>Upload New ZIP (Multiple & Drag & Drop)</h2>
+<form id="upload-form">
+  <div id="drop-zone">
+    Drag and drop ZIP files here or click to browse
+    <input type="file" id="file-input" name="files" multiple accept=".zip" style="display: none;">
+  </div>
+  <div id="upload-status" class="status"></div>
 </form>
 
 <h2>Available Comics</h2>
 <ul>
 {{range .}}
-<li><a href="/viewer/{{.}}">View {{.}}</a></li>
+<li><a href="/{{.}}">View {{.}}</a></li>
 {{end}}
 </ul>
 </body>
