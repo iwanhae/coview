@@ -13,8 +13,9 @@
   </div>
   <img id="image" src="" alt="Comic Page" class="max-w-full max-h-full object-contain" onload="hideSpinner()">
 </div>
-<div id="controls" class="fixed bottom-4 left-1/2 transform -translate-x-1/2 text-center z-10 cursor-pointer p-3 bg-black/50 rounded-xl" onclick="toggleModal()">
-  <span id="pageInfo" class="mx-4"></span>
+<div id="controls" class="fixed bottom-4 left-1/2 transform -translate-x-1/2 text-center z-10 p-3 bg-black/50 rounded-xl">
+  <span id="pageInfo" class="mx-4 cursor-pointer select-none" onclick="toggleModal()"></span>
+  <button id="fullscreenToggle" class="px-3 py-1 bg-gray-600 hover:bg-gray-500 rounded text-white text-sm ml-2" onclick="toggleFullscreen()">FS</button>
 </div>
 <div id="modal" class="hidden fixed z-20 left-0 top-0 w-full h-full bg-black/80" onclick="closeModal(event)">
   <div id="modal-content" class="bg-gray-800 m-auto mt-16 p-5 rounded-xl w-11/12 max-w-md text-center" onclick="event.stopPropagation();">
@@ -40,12 +41,12 @@ const totalPages = pages.length;
 const zipName = "{{.ZipName}}";
 function showSpinner() {
   document.getElementById('loading-spinner').classList.remove('hidden');
-  document.getElementById('image').style.opacity = '0';
+  document.getElementById('image').style.opacity = '0.5';
 }
 function hideSpinner() {
   document.getElementById('loading-spinner').classList.add('hidden');
   document.getElementById('image').style.opacity = '1';
-  document.getElementById('image').style.transition = 'opacity 0.3s';
+  document.getElementById('image').style.transition = 'opacity 0.15s';
 }
 function showError() {
   document.getElementById('error').classList.remove('hidden');
@@ -111,6 +112,32 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'ArrowLeft') prevPage();
   if (e.key === 'Escape') closeModal({target: {id: 'modal'}});
 });
+
+// Fullscreen functionality
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(err => {
+      console.log(`Error attempting to enable full-screen mode: ${err.message}`);
+    });
+  } else {
+    document.exitFullscreen();
+  }
+}
+
+function updateFullscreenButton() {
+  const btn = document.getElementById('fullscreenToggle');
+  if (document.fullscreenElement) {
+    btn.innerText = 'Exit';
+    btn.classList.remove('bg-gray-600', 'hover:bg-gray-500');
+    btn.classList.add('bg-gray-600', 'hover:bg-red-500');
+  } else {
+    btn.innerText = 'FS';
+    btn.classList.remove('bg-gray-600', 'hover:bg-red-500');
+    btn.classList.add('bg-gray-600', 'hover:bg-gray-500');
+  }
+}
+
+document.addEventListener('fullscreenchange', updateFullscreenButton);
 document.addEventListener('DOMContentLoaded', () => {
   const savedPage = localStorage.getItem('currentPage_' + zipName);
   if (savedPage !== null) {
@@ -118,6 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
   } else {
     loadPage(0);
   }
+  updateFullscreenButton();
 });
 </script>
 </body>

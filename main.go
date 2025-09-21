@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	if err := config.Load("config/config.yaml"); err != nil {
+	if err := config.Load("config.yaml"); err != nil {
 		log.Fatal("Failed to load config: ", err)
 	}
 
