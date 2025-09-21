@@ -139,6 +139,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Add upload button
         const uploadBtn = document.createElement('button');
+        uploadBtn.type = 'button';
         uploadBtn.textContent = `Upload ${files.length} Selected File(s)`;
         uploadBtn.className = 'mt-4 bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded w-full';
         uploadBtn.onclick = () => uploadFiles(selectedFiles);
@@ -154,12 +155,79 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    function uploadFiles(files) {
+    async function uploadFiles(files) {
         if (files.length === 0) return;
 
-        showStatus(`Uploading ${files.length} file(s)...`, 'info');
+        // Disable upload button during upload
+        const uploadBtn = filePreview.querySelector('button');
+        uploadBtn.disabled = true;
+        uploadBtn.textContent = 'Uploading...';
 
-        files.forEach((file, index) => {
+        showStatus(`Starting upload of ${files.length} file(s)...`, 'info');
+
+        let successCount = 0;
+        let errorCount = 0;
+        const errorMessages = [];
+
+        // Add overall progress bar
+        const overallProgressDiv = document.createElement('div');
+        overallProgressDiv.className = 'mt-4';
+        overallProgressDiv.innerHTML = `
+            <div class="text-sm text-gray-600 mb-1">Overall Progress</div>
+            <div class="w-full bg-gray-200 rounded-full h-3">
+                <div id="overall-progress" class="bg-blue-600 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+        `;
+        filePreview.appendChild(overallProgressDiv);
+
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const index = i;
+
+            // Update current file status
+            showStatus(`Uploading ${index + 1}/${files.length}: ${file.name}`, 'info');
+
+            try {
+                await uploadSingleFile(file, index);
+                successCount++;
+            } catch (error) {
+                errorCount++;
+                errorMessages.push(`Failed to upload ${file.name}: ${error.message}`);
+                showStatus(`Failed to upload ${file.name}`, 'error');
+            }
+
+            // Update overall progress
+            const overallPercent = ((index + 1) / files.length) * 100;
+            document.getElementById('overall-progress').style.width = overallPercent + '%';
+        }
+
+        // Remove overall progress bar
+        overallProgressDiv.remove();
+
+        // Show final result
+        if (errorCount === 0) {
+            showStatus(`Successfully uploaded all ${successCount} file(s)`, 'success');
+        } else {
+            showStatus(`Upload completed with ${successCount} success and ${errorCount} error(s). ${errorMessages.join('; ')}`, 'error');
+        }
+
+        // Re-enable upload button and update text
+        uploadBtn.disabled = false;
+        uploadBtn.textContent = `Upload ${selectedFiles.length} Selected File(s)`;
+
+        // Reload after successful uploads
+        if (successCount > 0 && confirm('Upload complete. Reload page to see new comics?')) {
+            window.location.reload();
+        }
+        
+        // Reset if all files are done
+        if (selectedFiles.length === 0) {
+            filePreview.classList.add('hidden');
+        }
+    }
+
+    function uploadSingleFile(file, index) {
+        return new Promise((resolve, reject) => {
             const formData = new FormData();
             formData.append('files', file);
 
@@ -175,36 +243,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
             xhr.onload = function() {
                 if (xhr.status === 200) {
-                    showStatus(`Successfully uploaded ${file.name}`, 'success');
+                    resolve();
                 } else {
-                    showStatus(`Upload failed for ${file.name}: ${xhr.responseText}`, 'error');
+                    reject(new Error(xhr.responseText || `HTTP ${xhr.status}`));
                 }
             };
 
             xhr.onerror = function() {
-                showStatus(`Network error uploading ${file.name}`, 'error');
+                reject(new Error('Network error'));
             };
 
             xhr.send(formData);
         });
-
-        // Reload after all uploads (simple, or use Promise.all for parallel)
-        setTimeout(() => {
-            if (confirm('Upload complete. Reload page to see new comics?')) {
-                window.location.reload();
-            }
-            filePreview.classList.add('hidden');
-            selectedFiles = [];
-        }, 2000);
     }
 
-    // Handle form submit (for compatibility)
-    uploadForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        if (selectedFiles.length > 0) {
-            uploadFiles(selectedFiles);
-        }
-    });
 
     function showStatus(message, type) {
         statusDiv.textContent = message;
@@ -218,7 +270,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Click to open file dialog
+    // Drop zone click still opens file dialog for convenience
     dropZone.addEventListener('click', () => {
         fileInput.click();
     });

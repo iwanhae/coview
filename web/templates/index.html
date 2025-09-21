@@ -14,7 +14,9 @@
     <h2 class="text-2xl font-semibold text-gray-900 mb-4">Upload New ZIP (Multiple & Drag & Drop)</h2>
     <form id="upload-form">
       <div id="drop-zone" class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-white hover:border-blue-400 transition-colors">
-        <p class="text-gray-600 mb-4">Drag and drop ZIP files here or click to browse</p>
+        <p class="text-gray-600 mb-4">Drag and drop ZIP files here</p>
+      </div>
+      <div class="mt-4 text-center">
         <input type="file" id="file-input" name="files" multiple accept=".zip" class="hidden">
         <button type="button" onclick="document.getElementById('file-input').click()" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
           Browse Files
