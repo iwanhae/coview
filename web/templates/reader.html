@@ -44,6 +44,7 @@ let preloadedPages = new Set();
 const PRELOAD_AHEAD = 15;
 const MAX_CONCURRENT_PRELOADS = 3;
 
+let preloadSessionId = 0;
 let activePreloads = 0;
 let preloadQueue = [];
 let pagesInQueue = new Set();
@@ -60,45 +61,57 @@ function updatePreloadStatus() {
   }
 }
 
-function onPreloadComplete(pageIndex) {
+function onPreloadComplete(pageIndex, sessionId) {
+    if (sessionId !== preloadSessionId) return; // Ignore stale completions
+
     activePreloads--;
     loadedForStatus++;
     preloadedPages.add(pageIndex);
     pagesInQueue.delete(pageIndex);
     updatePreloadStatus();
-    processPreloadQueue();
+    processPreloadQueue(sessionId);
 }
 
-function processPreloadQueue() {
+function processPreloadQueue(sessionId) {
+    if (sessionId !== preloadSessionId) return; // Ignore stale calls
+
     while (activePreloads < MAX_CONCURRENT_PRELOADS && preloadQueue.length > 0) {
         const pageIndex = preloadQueue.shift();
         activePreloads++;
 
         const img = new Image();
         img.src = '/' + zipName + '/' + pages[pageIndex];
-        img.onload = () => onPreloadComplete(pageIndex);
-        img.onerror = () => onPreloadComplete(pageIndex);
+        img.onload = () => onPreloadComplete(pageIndex, sessionId);
+        img.onerror = () => onPreloadComplete(pageIndex, sessionId);
     }
 }
 
-function startPreloading() {
+function startPreloading(sessionId) {
+  if (sessionId !== preloadSessionId) return; // Ignore stale calls
+
   const start = currentPage + 1;
   const end = Math.min(start + PRELOAD_AHEAD, totalPages);
 
   const pagesToQueue = [];
+  let alreadyLoadedCount = 0;
   for (let i = start; i < end; i++) {
-    if (!preloadedPages.has(i) && !pagesInQueue.has(i)) {
+    if (preloadedPages.has(i)) {
+      alreadyLoadedCount++;
+    } else if (!pagesInQueue.has(i)) {
       pagesToQueue.push(i);
       pagesInQueue.add(i);
     }
   }
 
+  if (end > start) {
+    totalForStatus = end - start;
+    loadedForStatus = alreadyLoadedCount;
+    updatePreloadStatus();
+  }
+
   if (pagesToQueue.length > 0) {
     preloadQueue.push(...pagesToQueue);
-    totalForStatus = pagesToQueue.length;
-    loadedForStatus = 0;
-    updatePreloadStatus();
-    processPreloadQueue();
+    processPreloadQueue(sessionId);
   }
 }
 
@@ -128,7 +141,17 @@ function loadPage(index) {
   document.getElementById('pageInfo').textContent = (currentPage + 1) + ' / ' + totalPages;
   document.getElementById('pageInput').value = currentPage + 1;
   localStorage.setItem('currentPage_' + zipName, currentPage.toString());
-  startPreloading();
+  
+  // Start a new preloading session, cancelling the previous one.
+  preloadSessionId++;
+  activePreloads = 0;
+  preloadQueue = [];
+  pagesInQueue = new Set();
+  totalForStatus = 0;
+  loadedForStatus = 0;
+  updatePreloadStatus(); // Hide status from the old session immediately.
+
+  startPreloading(preloadSessionId);
 }
 function nextPage() { loadPage(currentPage + 1); }
 function prevPage() { loadPage(currentPage - 1); }

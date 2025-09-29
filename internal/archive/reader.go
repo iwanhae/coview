@@ -149,13 +149,21 @@ func ServeFileFromZip(w http.ResponseWriter, r *http.Request, zipName string, zi
 			}
 			defer rc.Close()
 
+			// Caching headers
+			w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+			lastModified := f.Modified.UTC().Format(http.TimeFormat)
+			w.Header().Set("Last-Modified", lastModified)
+			if r.Header.Get("If-Modified-Since") == lastModified {
+				w.WriteHeader(http.StatusNotModified)
+				return
+			}
+
 			ext := filepath.Ext(filePath)
 			mimeType := mime.TypeByExtension(ext)
 			if mimeType == "" {
 				mimeType = "application/octet-stream"
 			}
 
-			w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
 			w.Header().Set("Content-Type", mimeType)
 			w.Header().Set("Content-Disposition", `inline; filename="`+filePath+`"`)
 			_, err = io.Copy(w, rc)
