@@ -17,6 +17,7 @@
   <span id="pageInfo" class="mx-4 cursor-pointer select-none" onclick="toggleModal()"></span>
   <button id="fullscreenToggle" class="px-3 py-1 bg-gray-600 hover:bg-gray-500 rounded text-white text-sm ml-2" onclick="toggleFullscreen()">FS</button>
 </div>
+<div id="preloadStatus" class="hidden fixed bottom-4 right-4 text-xs bg-black/50 text-white px-2 py-1 rounded-md"></div>
 <div id="modal" class="hidden fixed z-20 left-0 top-0 w-full h-full bg-black/80" onclick="closeModal(event)">
   <div id="modal-content" class="bg-gray-800 m-auto mt-16 p-5 rounded-xl w-11/12 max-w-md text-center" onclick="event.stopPropagation();">
     <h3 class="text-xl font-bold mb-4">Navigation</h3>
@@ -39,6 +40,68 @@ let currentPage = 0;
 const pages = [{{range $index, $file := .Files}}{{if $index}},{{end}}"{{$file}}"{{end}}];
 const totalPages = pages.length;
 const zipName = "{{.ZipName}}";
+let preloadedPages = new Set();
+const PRELOAD_AHEAD = 15;
+const MAX_CONCURRENT_PRELOADS = 3;
+
+let activePreloads = 0;
+let preloadQueue = [];
+let pagesInQueue = new Set();
+let totalForStatus = 0;
+let loadedForStatus = 0;
+
+function updatePreloadStatus() {
+  const statusElement = document.getElementById('preloadStatus');
+  if (totalForStatus > 0 && loadedForStatus < totalForStatus) {
+    statusElement.classList.remove('hidden');
+    statusElement.textContent = `Preloading: ${loadedForStatus} / ${totalForStatus}`;
+  } else {
+    statusElement.classList.add('hidden');
+  }
+}
+
+function onPreloadComplete(pageIndex) {
+    activePreloads--;
+    loadedForStatus++;
+    preloadedPages.add(pageIndex);
+    pagesInQueue.delete(pageIndex);
+    updatePreloadStatus();
+    processPreloadQueue();
+}
+
+function processPreloadQueue() {
+    while (activePreloads < MAX_CONCURRENT_PRELOADS && preloadQueue.length > 0) {
+        const pageIndex = preloadQueue.shift();
+        activePreloads++;
+
+        const img = new Image();
+        img.src = '/' + zipName + '/' + pages[pageIndex];
+        img.onload = () => onPreloadComplete(pageIndex);
+        img.onerror = () => onPreloadComplete(pageIndex);
+    }
+}
+
+function startPreloading() {
+  const start = currentPage + 1;
+  const end = Math.min(start + PRELOAD_AHEAD, totalPages);
+
+  const pagesToQueue = [];
+  for (let i = start; i < end; i++) {
+    if (!preloadedPages.has(i) && !pagesInQueue.has(i)) {
+      pagesToQueue.push(i);
+      pagesInQueue.add(i);
+    }
+  }
+
+  if (pagesToQueue.length > 0) {
+    preloadQueue.push(...pagesToQueue);
+    totalForStatus = pagesToQueue.length;
+    loadedForStatus = 0;
+    updatePreloadStatus();
+    processPreloadQueue();
+  }
+}
+
 function showSpinner() {
   document.getElementById('loading-spinner').classList.remove('hidden');
   document.getElementById('image').style.opacity = '0.5';
@@ -60,11 +123,12 @@ function loadPage(index) {
   if (index < 0 || index >= totalPages) return;
   currentPage = index;
   const img = document.getElementById('image');
-  img.src = '/' + zipName + '/' + pages[index] + '?t=' + Date.now();
+  img.src = '/' + zipName + '/' + pages[index];
   showSpinner();
   document.getElementById('pageInfo').textContent = (currentPage + 1) + ' / ' + totalPages;
   document.getElementById('pageInput').value = currentPage + 1;
   localStorage.setItem('currentPage_' + zipName, currentPage.toString());
+  startPreloading();
 }
 function nextPage() { loadPage(currentPage + 1); }
 function prevPage() { loadPage(currentPage - 1); }
