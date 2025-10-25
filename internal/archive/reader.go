@@ -46,6 +46,8 @@ func ListZips(w http.ResponseWriter, r *http.Request) {
 
 	var zipInfos []ZipInfo
 	imageExts := []string{".jpg", ".jpeg", ".png", ".gif", ".webp"}
+	cache := GetCacheManager()
+
 	for _, base := range bases {
 		fullpath := filepath.Join(cfg.Data.Dir, base)
 		stat, err := os.Stat(fullpath)
@@ -53,11 +55,20 @@ func ListZips(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		size := stat.Size()
+		modTime := stat.ModTime()
 
+		// Try to get from cache first
+		if cachedInfo := cache.Get(fullpath, modTime, size); cachedInfo != nil {
+			zipInfos = append(zipInfos, *cachedInfo)
+			continue
+		}
+
+		// Cache miss - scan the ZIP file
 		rdr, err := zip.OpenReader(fullpath)
 		if err != nil {
 			continue
 		}
+
 		var files natural.StringSlice
 		for _, f := range rdr.File {
 			name := strings.ToLower(f.Name)
@@ -68,6 +79,9 @@ func ListZips(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 		}
+		// Use defer to ensure proper resource cleanup
+		// Note: We close at the end of iteration, not deferred, since we're in a loop
+		// and want to release resources immediately after processing each file
 		rdr.Close()
 
 		sort.Sort(files)
@@ -77,13 +91,21 @@ func ListZips(w http.ResponseWriter, r *http.Request) {
 			firstImage = files[0]
 		}
 
-		zipInfos = append(zipInfos, ZipInfo{
+		info := ZipInfo{
 			Name:       base,
 			Size:       size,
 			ImageCount: count,
 			SizeStr:    fmt.Sprintf("%.1f MB", float64(size)/(1024*1024)),
 			FirstImage: firstImage,
-		})
+		}
+
+		// Store in cache
+		if err := cache.Set(fullpath, info, modTime, size); err != nil {
+			// Log error but continue (caching is not critical)
+			// In production, you might want to use a proper logger here
+		}
+
+		zipInfos = append(zipInfos, info)
 	}
 
 	t, err := template.ParseFiles("web/templates/index.html")
