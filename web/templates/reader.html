@@ -51,7 +51,7 @@ let preloadQueue = [];
 let pagesInQueue = new Set();
 let totalForStatus = 0;
 let loadedForStatus = 0;
-let viewMode = 'width'; // Will be initialized in DOMContentLoaded
+let viewMode = 'height'; // Will be initialized in DOMContentLoaded
 
 function updatePreloadStatus() {
   const statusElement = document.getElementById('preloadStatus');
@@ -253,7 +253,7 @@ function updateViewModeButton() {
 
 document.addEventListener('DOMContentLoaded', () => {
   // Initialize view mode from localStorage
-  viewMode = localStorage.getItem('viewMode_' + zipName) || 'width';
+  viewMode = localStorage.getItem('viewMode_' + zipName) || 'height';
   applyViewMode();
   updateViewModeButton();
   

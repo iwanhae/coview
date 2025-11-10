@@ -11,77 +11,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const sortSelect = document.getElementById("sort-by");
     let selectedFiles = [];
 
-    // Prevent default drag behaviors
-    ["dragenter", "dragover", "dragleave", "drop"].forEach((eventName) => {
-        dropZone.addEventListener(eventName, preventDefaults, false);
-        document.body.addEventListener(eventName, preventDefaults, false);
-    });
-
-    // Highlight drop zone
-    ["dragenter", "dragover"].forEach((eventName) => {
-        dropZone.addEventListener(eventName, highlight, false);
-    });
-    ["dragleave", "drop"].forEach((eventName) => {
-        dropZone.addEventListener(eventName, unhighlight, false);
-    });
-
-    // Handle drop
-    dropZone.addEventListener("drop", handleDrop, false);
-
-    // Handle file input change
-    fileInput.addEventListener("change", (e) => {
-        handleFiles(e.target.files);
-        e.target.value = ""; // Reset for next selection
-    });
-
-    // Search functionality
-    if (searchInput) {
-        searchInput.addEventListener("input", (e) => {
-            const query = e.target.value.toLowerCase();
-            const cards = zipsContainer.querySelectorAll(".zip-card");
-            let visibleCount = 0;
-
-            cards.forEach((card) => {
-                const name = card.dataset.name.toLowerCase();
-                if (name.includes(query)) {
-                    card.style.display = "";
-                    visibleCount++;
-                } else {
-                    card.style.display = "none";
-                }
-            });
-
-            noResults.classList.toggle("hidden", visibleCount > 0);
-            if (visibleCount === 0 && query) {
-                noResults.classList.remove("hidden");
-            } else if (query === "") {
-                noResults.classList.add("hidden");
-            }
-
-            // Re-apply current sort after filtering
-            if (sortSelect && sortSelect.value) {
-                sortComics(sortSelect.value);
-            }
-        });
-    }
-
-    // Sort functionality
-    if (sortSelect) {
-        // Load saved sort preference from localStorage
-        const savedSort = localStorage.getItem("comicSortPreference");
-        if (savedSort) {
-            sortSelect.value = savedSort;
-            sortComics(savedSort);
-        }
-
-        sortSelect.addEventListener("change", (e) => {
-            const sortValue = e.target.value;
-            sortComics(sortValue);
-            // Save sort preference to localStorage
-            localStorage.setItem("comicSortPreference", sortValue);
-        });
-    }
-
     // Natural sort comparison function (handles numbers in strings correctly)
     function naturalCompare(a, b) {
         const ax = [];
@@ -148,6 +77,78 @@ document.addEventListener("DOMContentLoaded", function () {
                 card.style.display = "";
             }
             zipsContainer.appendChild(card);
+        });
+    }
+
+    // Apply saved sort immediately to prevent double render
+    const savedSort = localStorage.getItem("comicSortPreference");
+    if (savedSort && sortSelect) {
+        sortSelect.value = savedSort;
+        // Apply sort synchronously before anything else renders
+        sortComics(savedSort);
+    }
+
+    // Prevent default drag behaviors
+    ["dragenter", "dragover", "dragleave", "drop"].forEach((eventName) => {
+        dropZone.addEventListener(eventName, preventDefaults, false);
+        document.body.addEventListener(eventName, preventDefaults, false);
+    });
+
+    // Highlight drop zone
+    ["dragenter", "dragover"].forEach((eventName) => {
+        dropZone.addEventListener(eventName, highlight, false);
+    });
+    ["dragleave", "drop"].forEach((eventName) => {
+        dropZone.addEventListener(eventName, unhighlight, false);
+    });
+
+    // Handle drop
+    dropZone.addEventListener("drop", handleDrop, false);
+
+    // Handle file input change
+    fileInput.addEventListener("change", (e) => {
+        handleFiles(e.target.files);
+        e.target.value = ""; // Reset for next selection
+    });
+
+    // Search functionality
+    if (searchInput) {
+        searchInput.addEventListener("input", (e) => {
+            const query = e.target.value.toLowerCase();
+            const cards = zipsContainer.querySelectorAll(".zip-card");
+            let visibleCount = 0;
+
+            cards.forEach((card) => {
+                const name = card.dataset.name.toLowerCase();
+                if (name.includes(query)) {
+                    card.style.display = "";
+                    visibleCount++;
+                } else {
+                    card.style.display = "none";
+                }
+            });
+
+            noResults.classList.toggle("hidden", visibleCount > 0);
+            if (visibleCount === 0 && query) {
+                noResults.classList.remove("hidden");
+            } else if (query === "") {
+                noResults.classList.add("hidden");
+            }
+
+            // Re-apply current sort after filtering
+            if (sortSelect && sortSelect.value) {
+                sortComics(sortSelect.value);
+            }
+        });
+    }
+
+    // Sort functionality
+    if (sortSelect) {
+        sortSelect.addEventListener("change", (e) => {
+            const sortValue = e.target.value;
+            sortComics(sortValue);
+            // Save sort preference to localStorage
+            localStorage.setItem("comicSortPreference", sortValue);
         });
     }
 
