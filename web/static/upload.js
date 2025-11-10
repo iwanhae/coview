@@ -67,8 +67,18 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Sort functionality
     if (sortSelect) {
+        // Load saved sort preference from localStorage
+        const savedSort = localStorage.getItem("comicSortPreference");
+        if (savedSort) {
+            sortSelect.value = savedSort;
+            sortComics(savedSort);
+        }
+
         sortSelect.addEventListener("change", (e) => {
-            sortComics(e.target.value);
+            const sortValue = e.target.value;
+            sortComics(sortValue);
+            // Save sort preference to localStorage
+            localStorage.setItem("comicSortPreference", sortValue);
         });
     }
 
@@ -359,10 +369,10 @@ document.addEventListener("DOMContentLoaded", function () {
     function showStatus(message, type) {
         statusDiv.textContent = message;
         statusDiv.className = `mt-4 p-4 rounded ${type === "info"
-                ? "bg-blue-100 text-blue-800"
-                : type === "success"
-                    ? "bg-green-100 text-green-800"
-                    : "bg-red-100 text-red-800"
+            ? "bg-blue-100 text-blue-800"
+            : type === "success"
+                ? "bg-green-100 text-green-800"
+                : "bg-red-100 text-red-800"
             } ${statusDiv.className.includes("hidden") ? "" : "block"}`;
         statusDiv.classList.remove("hidden");
 
