@@ -15,6 +15,7 @@
 </div>
 <div id="controls" class="fixed bottom-4 left-1/2 transform -translate-x-1/2 text-center z-10 p-3 bg-black/50 rounded-xl">
   <span id="pageInfo" class="mx-4 cursor-pointer select-none" onclick="toggleModal()"></span>
+  <button id="viewOptionsToggle" class="px-3 py-1 bg-gray-600 hover:bg-gray-500 rounded text-white text-sm ml-2" onclick="toggleViewMode()">Width</button>
   <button id="fullscreenToggle" class="px-3 py-1 bg-gray-600 hover:bg-gray-500 rounded text-white text-sm ml-2" onclick="toggleFullscreen()">FS</button>
 </div>
 <div id="preloadStatus" class="hidden fixed bottom-4 right-4 text-xs bg-black/50 text-white px-2 py-1 rounded-md"></div>
@@ -50,6 +51,7 @@ let preloadQueue = [];
 let pagesInQueue = new Set();
 let totalForStatus = 0;
 let loadedForStatus = 0;
+let viewMode = 'width'; // Will be initialized in DOMContentLoaded
 
 function updatePreloadStatus() {
   const statusElement = document.getElementById('preloadStatus');
@@ -141,6 +143,7 @@ function loadPage(index) {
   document.getElementById('pageInfo').textContent = (currentPage + 1) + ' / ' + totalPages;
   document.getElementById('pageInput').value = currentPage + 1;
   localStorage.setItem('currentPage_' + zipName, currentPage.toString());
+  applyViewMode();
   
   // Start a new preloading session, cancelling the previous one.
   preloadSessionId++;
@@ -225,7 +228,35 @@ function updateFullscreenButton() {
 }
 
 document.addEventListener('fullscreenchange', updateFullscreenButton);
+
+// View options functionality
+function toggleViewMode() {
+  viewMode = viewMode === 'width' ? 'height' : 'width';
+  localStorage.setItem('viewMode_' + zipName, viewMode);
+  applyViewMode();
+  updateViewModeButton();
+}
+
+function applyViewMode() {
+  const img = document.getElementById('image');
+  if (viewMode === 'width') {
+    img.className = 'w-full h-auto object-contain';
+  } else {
+    img.className = 'w-auto h-full object-contain';
+  }
+}
+
+function updateViewModeButton() {
+  const btn = document.getElementById('viewOptionsToggle');
+  btn.textContent = viewMode === 'width' ? 'Width' : 'Height';
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+  // Initialize view mode from localStorage
+  viewMode = localStorage.getItem('viewMode_' + zipName) || 'width';
+  applyViewMode();
+  updateViewModeButton();
+  
   const savedPage = localStorage.getItem('currentPage_' + zipName);
   if (savedPage !== null) {
     loadPage(parseInt(savedPage));
