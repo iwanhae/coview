@@ -1,63 +1,141 @@
 <!DOCTYPE html>
 <html>
-<head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Comic ZIP Files</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="/static/upload.js"></script>
-</head>
-<body>
-<h1 class="text-3xl font-bold text-gray-900 mb-8 text-center">Comic ZIP Files</h1>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Comic ZIP Files</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/static/upload.js"></script>
+  </head>
+  <body>
+    <h1 class="text-3xl font-bold text-gray-900 mb-8 text-center">
+      Comic ZIP Files
+    </h1>
 
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-  <div class="mb-8">
-    <h2 class="text-2xl font-semibold text-gray-900 mb-4">Upload New ZIP (Multiple & Drag & Drop)</h2>
-    <form id="upload-form">
-      <div id="drop-zone" class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-white hover:border-blue-400 transition-colors">
-        <p class="text-gray-600 mb-4">Drag and drop ZIP files here</p>
-      </div>
-      <div class="mt-4 text-center">
-        <input type="file" id="file-input" name="files" multiple accept=".zip" class="hidden">
-        <button type="button" onclick="document.getElementById('file-input').click()" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-          Browse Files
-        </button>
-      </div>
-      <div id="upload-status" class="mt-4 p-4 rounded hidden"></div>
-      <div id="file-preview" class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 hidden"></div>
-    </form>
-  </div>
-</div>
-
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-  <div class="mb-6">
-    <h2 class="text-2xl font-semibold text-gray-900 mb-4">Available Comics</h2>
-    <div class="relative mb-4">
-      <input type="text" id="search-input" placeholder="Search comics by name..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="mb-8">
+        <h2 class="text-2xl font-semibold text-gray-900 mb-4">
+          Upload New ZIP (Multiple & Drag & Drop)
+        </h2>
+        <form id="upload-form">
+          <div
+            id="drop-zone"
+            class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-white hover:border-blue-400 transition-colors"
+          >
+            <p class="text-gray-600 mb-4">Drag and drop ZIP files here</p>
+          </div>
+          <div class="mt-4 text-center">
+            <input
+              type="file"
+              id="file-input"
+              name="files"
+              multiple
+              accept=".zip"
+              class="hidden"
+            />
+            <button
+              type="button"
+              onclick="document.getElementById('file-input').click()"
+              class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            >
+              Browse Files
+            </button>
+          </div>
+          <div id="upload-status" class="mt-4 p-4 rounded hidden"></div>
+          <div
+            id="file-preview"
+            class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 hidden"
+          ></div>
+        </form>
       </div>
     </div>
-    <div id="zips-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-{{range .}}
-      <div class="zip-card bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow" data-name="{{.Name}}">
-        <div class="p-4">
-          <div class="aspect-[2/3] w-full mb-3 rounded overflow-hidden bg-gray-200">
-            {{if .FirstImage}}
-            <img src="/{{.Name}}/{{.FirstImage}}" alt="{{.Name}} thumbnail" class="w-full h-full object-cover lazy" data-src="/{{.Name}}/{{.FirstImage}}">
-            {{else}}
-            <div class="w-full h-full flex items-center justify-center">
-              <span class="text-gray-500">No preview</span>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="mb-6">
+        <h2 class="text-2xl font-semibold text-gray-900 mb-4">
+          Available Comics
+        </h2>
+        <div class="flex flex-col sm:flex-row gap-4 mb-4">
+          <div class="relative flex-1">
+            <input
+              type="text"
+              id="search-input"
+              placeholder="Search comics by name..."
+              class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            <div
+              class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+            >
+              <svg
+                class="h-5 w-5 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                ></path>
+              </svg>
             </div>
-            {{end}}
           </div>
-          <h3 class="text-lg font-semibold text-gray-900 truncate mb-2"><a href="/{{.Name}}" class="hover:text-blue-600">{{.Name}}</a></h3>
-          <p class="text-sm text-gray-600">{{.SizeStr}} • {{.ImageCount}} images</p>
+          <div class="flex gap-2">
+            <select
+              id="sort-by"
+              class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+            >
+              <option value="name-asc">Name (A-Z)</option>
+              <option value="name-desc">Name (Z-A)</option>
+              <option value="date-asc">Modified Date (Oldest)</option>
+              <option value="date-desc">Modified Date (Newest)</option>
+              <option value="size-asc">File Size (Smallest)</option>
+              <option value="size-desc">File Size (Largest)</option>
+            </select>
+          </div>
+        </div>
+        <div
+          id="zips-container"
+          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+        >
+          {{range .}}
+          <div
+            class="zip-card bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+            data-name="{{.Name}}"
+            data-size="{{.Size}}"
+            data-modtime="{{.ModTimeUnix}}"
+          >
+            <div class="p-4">
+              <div
+                class="aspect-[2/3] w-full mb-3 rounded overflow-hidden bg-gray-200"
+              >
+                {{if .FirstImage}}
+                <img
+                  src="/{{.Name}}/{{.FirstImage}}"
+                  alt="{{.Name}} thumbnail"
+                  class="w-full h-full object-cover lazy"
+                  data-src="/{{.Name}}/{{.FirstImage}}"
+                />
+                {{else}}
+                <div class="w-full h-full flex items-center justify-center">
+                  <span class="text-gray-500">No preview</span>
+                </div>
+                {{end}}
+              </div>
+              <h3 class="text-lg font-semibold text-gray-900 truncate mb-2">
+                <a href="/{{.Name}}" class="hover:text-blue-600">{{.Name}}</a>
+              </h3>
+              <p class="text-sm text-gray-600">
+                {{.SizeStr}} • {{.ImageCount}} images
+              </p>
+            </div>
+          </div>
+          {{end}}
+        </div>
+        <div id="no-results" class="hidden text-center py-8 text-gray-500">
+          No comics found matching your search.
         </div>
       </div>
-{{end}}
     </div>
-    <div id="no-results" class="hidden text-center py-8 text-gray-500">No comics found matching your search.</div>
-  </div>
-</div>
-</body>
+  </body>
 </html>

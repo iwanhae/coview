@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('search-input');
     const zipsContainer = document.getElementById('zips-container');
     const noResults = document.getElementById('no-results');
+    const sortSelect = document.getElementById('sort-by');
     let selectedFiles = [];
 
     // Prevent default drag behaviors
@@ -43,7 +44,7 @@ document.addEventListener('DOMContentLoaded', function() {
             cards.forEach(card => {
                 const name = card.dataset.name.toLowerCase();
                 if (name.includes(query)) {
-                    card.style.display = 'block';
+                    card.style.display = '';
                     visibleCount++;
                 } else {
                     card.style.display = 'none';
@@ -56,6 +57,65 @@ document.addEventListener('DOMContentLoaded', function() {
             } else if (query === '') {
                 noResults.classList.add('hidden');
             }
+
+            // Re-apply current sort after filtering
+            if (sortSelect && sortSelect.value) {
+                sortComics(sortSelect.value);
+            }
+        });
+    }
+
+    // Sort functionality
+    if (sortSelect) {
+        sortSelect.addEventListener('change', (e) => {
+            sortComics(e.target.value);
+        });
+    }
+
+    function sortComics(sortValue) {
+        const cards = Array.from(zipsContainer.querySelectorAll('.zip-card'));
+        
+        // Store visibility state
+        const visibilityMap = new Map();
+        cards.forEach(card => {
+            visibilityMap.set(card, card.style.display);
+        });
+        
+        // Sort all cards
+        cards.sort((a, b) => {
+            const [sortType, order] = sortValue.split('-');
+            let comparison = 0;
+
+            switch (sortType) {
+                case 'name':
+                    const nameA = (a.dataset.name || '').toLowerCase();
+                    const nameB = (b.dataset.name || '').toLowerCase();
+                    comparison = nameA.localeCompare(nameB);
+                    break;
+                case 'date':
+                    const dateA = parseInt(a.dataset.modtime || '0', 10);
+                    const dateB = parseInt(b.dataset.modtime || '0', 10);
+                    comparison = dateA - dateB;
+                    break;
+                case 'size':
+                    const sizeA = parseInt(a.dataset.size || '0', 10);
+                    const sizeB = parseInt(b.dataset.size || '0', 10);
+                    comparison = sizeA - sizeB;
+                    break;
+            }
+
+            return order === 'desc' ? -comparison : comparison;
+        });
+
+        // Re-append sorted cards and restore visibility
+        cards.forEach(card => {
+            const originalDisplay = visibilityMap.get(card);
+            if (originalDisplay === 'none') {
+                card.style.display = 'none';
+            } else {
+                card.style.display = '';
+            }
+            zipsContainer.appendChild(card);
         });
     }
 

@@ -11,17 +11,20 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/iwanhae/coview/internal/config"
 	"github.com/iwanhae/coview/pkg/natural"
 )
 
 type ZipInfo struct {
-	Name       string
-	Size       int64
-	ImageCount int
-	SizeStr    string
-	FirstImage string
+	Name        string
+	Size        int64
+	ImageCount  int
+	SizeStr     string
+	FirstImage  string
+	ModTime     time.Time
+	ModTimeUnix int64
 }
 
 // ListZips lists all ZIP files in the data directory and renders the template.
@@ -59,6 +62,9 @@ func ListZips(w http.ResponseWriter, r *http.Request) {
 
 		// Try to get from cache first
 		if cachedInfo := cache.Get(fullpath, modTime, size); cachedInfo != nil {
+			// Ensure ModTime is set from cache
+			cachedInfo.ModTime = modTime
+			cachedInfo.ModTimeUnix = modTime.Unix()
 			zipInfos = append(zipInfos, *cachedInfo)
 			continue
 		}
@@ -92,11 +98,13 @@ func ListZips(w http.ResponseWriter, r *http.Request) {
 		}
 
 		info := ZipInfo{
-			Name:       base,
-			Size:       size,
-			ImageCount: count,
-			SizeStr:    fmt.Sprintf("%.1f MB", float64(size)/(1024*1024)),
-			FirstImage: firstImage,
+			Name:        base,
+			Size:        size,
+			ImageCount:  count,
+			SizeStr:     fmt.Sprintf("%.1f MB", float64(size)/(1024*1024)),
+			FirstImage:  firstImage,
+			ModTime:     modTime,
+			ModTimeUnix: modTime.Unix(),
 		}
 
 		// Store in cache
