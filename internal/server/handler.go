@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -74,31 +75,56 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := r.ParseMultipartForm(0); err != nil { // 0 for no limit
-		http.Error(w, fmt.Sprintf("Failed to parse form: %v", err), http.StatusBadRequest)
-		return
-	}
-
-	files := r.MultipartForm.File["files"]
-	if len(files) == 0 {
-		http.Error(w, "No files uploaded", http.StatusBadRequest)
+	// Use MultipartReader for streaming uploads - doesn't load entire form into memory
+	reader, err := r.MultipartReader()
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to create multipart reader: %v", err), http.StatusBadRequest)
 		return
 	}
 
 	var errors []string
-	for _, fheader := range files {
-		file, err := fheader.Open()
+	var fileCount int
+
+	// Stream through each part in the multipart form
+	for {
+		part, err := reader.NextPart()
+		if err == io.EOF {
+			break
+		}
 		if err != nil {
-			errors = append(errors, fmt.Sprintf("Failed to open %s: %v", fheader.Filename, err))
+			errors = append(errors, fmt.Sprintf("Failed to read multipart: %v", err))
+			break
+		}
+
+		// Only process file parts with form name "files"
+		if part.FormName() != "files" {
+			part.Close()
 			continue
 		}
 
-		filename := filepath.Base(fheader.Filename)
-		err = archive.UploadZip(filename, file, 0) // No limit
-		file.Close()
+		// Get filename from Content-Disposition header
+		filename := part.FileName()
+		if filename == "" {
+			part.Close()
+			continue
+		}
+
+		// Extract just the base filename for security
+		filename = filepath.Base(filename)
+
+		// Stream directly to disk - UploadZip handles the temp file creation
+		err = archive.UploadZip(filename, part, 0) // No limit
+		part.Close()
 		if err != nil {
 			errors = append(errors, fmt.Sprintf("Upload failed for %s: %v", filename, err))
+		} else {
+			fileCount++
 		}
+	}
+
+	if fileCount == 0 && len(errors) == 0 {
+		http.Error(w, "No files uploaded", http.StatusBadRequest)
+		return
 	}
 
 	if len(errors) > 0 {
